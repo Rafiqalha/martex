@@ -1,9 +1,14 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from sqlalchemy.orm import Session
 from typing import List
+import models
+import schemas
+from database import engine, get_db
 
-app = FastAPI()
+models.Base.metadata.create_all(bind=engine)
+
+app = FastAPI(title="TumbuhSehat API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -13,25 +18,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-measurements_db = [
-    {"lat": -0.7893, "lng": 113.9213, "age": 24, "z_score": -2.5},
-    {"lat": -2.5489, "lng": 118.0149, "age": 12, "z_score": 1.2}
-]
+@app.post("/api/measurements/sync")
+def sync_measurements(payload: schemas.SyncPayload, db: Session = Depends(get_db)):
+    inserted_records = []
+    for item in payload.data:
+        db_item = models.Measurement(**item.model_dump())
+        db.add(db_item)
+        inserted_records.append(db_item)
+    db.commit()
+    return {"status": "success", "synced_count": len(inserted_records)}
 
-class Measurement(BaseModel):
-    age: int
-    weight: float
-    height: float
-    lat: float
-    lng: float
-    z_score: float
-
-@app.post("/api/measurements")
-def create_measurement(data: Measurement):
-    new_data = data.model_dump()
-    measurements_db.append(new_data)
-    return {"status": "success", "data": new_data}
-
-@app.get("/api/measurements", response_model=List[dict])
-def get_measurements():
-    return measurements_db
+@app.get("/api/measurements", response_model=List[schemas.MeasurementResponse])
+def get_measurements(db: Session = Depends(get_db)):
+    return db.query(models.Measurement).all()

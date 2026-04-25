@@ -10,29 +10,29 @@ class ApiClient {
       final unsyncedData = await LocalDatabase.instance.getUnsyncedMeasurements();
       if (unsyncedData.isEmpty) return true;
 
-      bool allSynced = true;
+      final payload = unsyncedData.map((e) => {
+        'age': e.age,
+        'weight': e.weight,
+        'height': e.height,
+        'gender': e.gender,
+        'lat': e.lat,
+        'lng': e.lng,
+        'z_score': e.zScore,
+      }).toList();
 
-      for (var data in unsyncedData) {
-        final response = await http.post(
-          Uri.parse('$baseUrl/measurements'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({
-            'age': data.age,
-            'weight': data.weight,
-            'height': data.height,
-            'lat': data.lat,
-            'lng': data.lng,
-            'z_score': data.zScore,
-          }),
-        );
+      final response = await http.post(
+        Uri.parse('$baseUrl/measurements/sync'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'data': payload}),
+      );
 
-        if (response.statusCode == 200) {
+      if (response.statusCode == 200) {
+        for (var data in unsyncedData) {
           await LocalDatabase.instance.markAsSynced(data.id!);
-        } else {
-          allSynced = false;
         }
+        return true;
       }
-      return allSynced;
+      return false;
     } catch (e) {
       return false;
     }
