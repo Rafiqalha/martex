@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../core/local_db.dart';
-import '../models/measurement.dart';
+import '../../core/local_db.dart';
+import '../../models/measurement.dart';
 
 class InputScreen extends StatefulWidget {
   const InputScreen({super.key});
@@ -123,7 +123,7 @@ class _InputScreenState extends State<InputScreen> {
     );
   }
 
-  Future<void> _handleSave() async {
+ Future<void> _handleSave() async {
     if (_ageController.text.isEmpty || _weightController.text.isEmpty || _heightController.text.isEmpty || _selectedLocation == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Mohon lengkapi semua data dan lokasi!")));
       return;
@@ -138,20 +138,42 @@ class _InputScreenState extends State<InputScreen> {
         weight: double.parse(_weightController.text),
         height: double.parse(_heightController.text),
         gender: _selectedGender,
-        lat: _selectedLocation!['lat'], // Ambil koordinat dari dropdown
-        lng: _selectedLocation!['lng'], // Ambil koordinat dari dropdown
+        lat: _selectedLocation!['lat'], 
+        lng: _selectedLocation!['lng'], 
         zScore: z,
       );
 
       await LocalDatabase.instance.insertMeasurement(m);
-      if (mounted) Navigator.pop(context);
+      
+      // PERBAIKAN ARSITEKTUR: Jangan gunakan Navigator.pop!
+      // Bersihkan form dan tampilkan pesan sukses.
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Data balita berhasil disimpan ke sistem!"),
+            backgroundColor: Color(0xFF10B981),
+            behavior: SnackBarBehavior.floating,
+          )
+        );
+        
+        // Reset formulir untuk input berikutnya
+        _ageController.clear();
+        _weightController.clear();
+        _heightController.clear();
+        setState(() {
+          _selectedLocation = null;
+          _selectedGender = 'L';
+        });
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Terjadi kesalahan sistem: $e")));
     } finally {
-      setState(() => _isSaving = false);
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
     }
   }
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(

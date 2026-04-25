@@ -1,7 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-
-// PERHATIKAN: Import telah diubah menjadi ../../ untuk naik 2 folder
+import 'package:google_generative_ai/google_generative_ai.dart';
 import '../../core/local_db.dart';
+import '../../core/api_client.dart';
 import '../../models/measurement.dart';
 
 class SmartNutritionScreen extends StatefulWidget {
@@ -12,9 +13,11 @@ class SmartNutritionScreen extends StatefulWidget {
 }
 
 class _SmartNutritionScreenState extends State<SmartNutritionScreen> {
-  Measurement? _latestData;
+  List<Measurement> _measurements = [];
   bool _isLoading = true;
-  final List<bool> _checklist = [false, false, false]; // Ditambahkan 'final'
+  bool _isSyncing = false;
+  bool _isGenerating = false;
+  final String _apiKey = 'AIzaSyDL4NqxqWWnU8-piYwsFX1Uoyl2ytizE64';
 
   @override
   void initState() {
@@ -25,218 +28,179 @@ class _SmartNutritionScreenState extends State<SmartNutritionScreen> {
   Future<void> _loadData() async {
     final data = await LocalDatabase.instance.getAllMeasurements();
     setState(() {
-      if (data.isNotEmpty) {
-        _latestData = data.first;
-      }
+      _measurements = data;
       _isLoading = false;
     });
   }
 
-  Map<String, dynamic> _getAIRecommendation(double zScore) {
-    if (zScore >= -2.0) {
-      return {
-        "status": "Sehat Terkendali",
-        "color": const Color(0xFF10B981),
-        "icon": Icons.verified_rounded,
-        "budget": "Rp 7.000 / Hari",
-        "foods": [
-          {"name": "1 Butir Telur Rebus", "benefit": "Protein dasar otak"},
-          {"name": "Tahu/Tempe Goreng", "benefit": "Protein nabati tambahan"},
-          {"name": "Sayur Bayam", "benefit": "Zat besi ringan"}
-        ]
-      };
-    } else if (zScore >= -3.0) {
-      return {
-        "status": "Berisiko Stunting",
-        "color": const Color(0xFFF59E0B),
-        "icon": Icons.warning_rounded,
-        "budget": "Rp 12.000 / Hari",
-        "foods": [
-          {"name": "2 Butir Telur (Pagi & Malam)", "benefit": "Booster protein hewani"},
-          {"name": "Ati Ayam (1 Porsi)", "benefit": "Tinggi zat besi & cegah anemia"},
-          {"name": "Nasi & Kuah Kaldu", "benefit": "Kalori padat"}
-        ]
-      };
-    } else {
-      return {
-        "status": "Fase Stunting Kritis",
-        "color": const Color(0xFFEF4444),
-        "icon": Icons.emergency_rounded,
-        "budget": "Rp 15.000 / Hari + PKM",
-        "foods": [
-          {"name": "Ikan Lele / Kembung", "benefit": "Omega 3 & Protein Tinggi"},
-          {"name": "2 Butir Telur & Susu", "benefit": "Recovery massa otot"},
-          {"name": "Puskesmas", "benefit": "Wajib ambil PMT (Roti Biskuit Kemenkes)"}
-        ]
-      };
+  Future<void> _syncData() async {
+    setState(() => _isSyncing = true);
+    final success = await ApiClient.syncData();
+    await _loadData();
+    setState(() => _isSyncing = false);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(success ? 'Sinkronisasi berhasil' : 'Gagal terhubung ke server'),
+          backgroundColor: success ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+        ),
+      );
     }
   }
 
-  Widget _build3DCard({required Widget child, required Color color}) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(25),
-        boxShadow: [
-          BoxShadow(
-            color: color.withAlpha(100), // Mengganti .withOpacity(0.4)
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-          BoxShadow(
-            color: Colors.white.withAlpha(50), // Mengganti .withOpacity(0.2)
-            blurRadius: 2,
-            offset: const Offset(0, -2),
-            spreadRadius: 1,
-          ),
-        ],
-      ),
-      child: child,
-    );
+  Future<void> _getAIReco(Measurement m) async {
+    setState(() => _isGenerating = true);
+    try {
+      final model = GenerativeModel(model: 'gemini-3-flash-preview', apiKey: _apiKey);
+      final prompt = 'Balita ${m.age} bln, BB ${m.weight}kg, TB ${m.height}cm, Z-Score ${m.zScore.toStringAsFixed(2)}. Berikan 3 makanan protein hewani lokal murah. Jawab hanya JSON: {"status": "...", "budget": "...", "foods": [{"name": "...", "benefit": "..."}]}';
+      final response = await model.generateContent([Content.text(prompt)]);
+      final parsed = jsonDecode(response.text!.replaceAll('```json', '').replaceAll('```', ''));
+      
+      if (mounted) {
+        _showNutritionSheet(m, parsed);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Gagal memuat AI: $e")));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isGenerating = false);
+      }
+    }
   }
 
-  Widget _buildChecklistItem(Map<String, String> food, int index) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(10), // Mengganti .withOpacity(0.04)
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-        border: Border.all(
-          color: _checklist[index] ? const Color(0xFF10B981) : Colors.transparent,
-          width: 2,
+  void _showNutritionSheet(Measurement m, Map<String, dynamic> ai) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(30),
+        decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(40))),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(width: 50, height: 5, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10))),
+            const SizedBox(height: 20),
+            Text(ai['status'], style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
+            const SizedBox(height: 20),
+            ...List.generate(ai['foods'].length, (i) => ListTile(
+              leading: const Icon(Icons.restaurant_rounded, color: Color(0xFF10B981)),
+              title: Text(ai['foods'][i]['name'], style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+              subtitle: Text(ai['foods'][i]['benefit'], style: const TextStyle(color: Color(0xFF64748B))),
+            )),
+            const SizedBox(height: 30),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(15)
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text("Estimasi Budget:", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                  Text(ai['budget'], style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF10B981), fontSize: 16)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
         ),
-      ),
-      child: CheckboxListTile(
-        value: _checklist[index],
-        onChanged: (val) {
-          setState(() {
-            _checklist[index] = val ?? false;
-          });
-        },
-        activeColor: const Color(0xFF10B981),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        title: Text(
-          food["name"]!,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF0F172A),
-            decoration: _checklist[index] ? TextDecoration.lineThrough : null,
-          ),
-        ),
-        subtitle: Text(food["benefit"]!, style: const TextStyle(fontSize: 12)),
-        secondary: const Icon(Icons.restaurant_rounded, color: Color(0xFF64748B)),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
-    if (_latestData == null) {
-      return Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
-        appBar: AppBar(title: const Text("AI Nutrisi")),
-        body: const Center(child: Text("Data belum tersedia. Silakan ukur balita terlebih dahulu.", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey))),
-      );
-    }
-
-    final aiPlan = _getAIRecommendation(_latestData!.zScore);
-    final foods = aiPlan["foods"] as List<Map<String, String>>;
+    int unsynced = _measurements.where((m) => m.isSynced == 0).length;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text("Smart Nutrition AI", style: TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.w900, fontSize: 22)),
-        centerTitle: false,
+        title: const Text("Nutrisi & Sinkronisasi", style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _build3DCard(
-              color: aiPlan["color"],
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+      body: _isLoading 
+        ? const Center(child: CircularProgressIndicator(color: Color(0xFF10B981))) 
+        : RefreshIndicator(
+            onRefresh: _loadData,
+            color: const Color(0xFF10B981),
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(20),
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(25),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(colors: [Color(0xFF0F172A), Color(0xFF1E293B)]),
+                    borderRadius: BorderRadius.circular(30),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withAlpha(20), blurRadius: 15, offset: const Offset(0, 10))
+                    ]
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(color: Colors.white.withAlpha(50), borderRadius: BorderRadius.circular(12)), // Mengganti .withOpacity(0.2)
-                        child: Icon(aiPlan["icon"], color: Colors.white, size: 30),
-                      ),
-                      const SizedBox(width: 15),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text("Status Medis", style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
-                          Text(aiPlan["status"], style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
+                          const Text("Data Lokal", style: TextStyle(color: Colors.white70)),
+                          Text("$unsynced Tertunda", style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
                         ],
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: const Color(0xFF0F172A),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))
+                        ),
+                        onPressed: unsynced == 0 || _isSyncing ? null : _syncData,
+                        child: _isSyncing 
+                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0F172A))) 
+                            : const Text("Kirim", style: TextStyle(fontWeight: FontWeight.bold)),
                       )
                     ],
                   ),
-                  const SizedBox(height: 20),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-                    decoration: BoxDecoration(color: Colors.black.withAlpha(38), borderRadius: BorderRadius.circular(10)), // Mengganti .withOpacity(0.15)
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text("Estimasi Budget Belanja", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                        Text(aiPlan["budget"], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
-                      ],
+                ),
+                const SizedBox(height: 30),
+                const Text("Klik Riwayat untuk Analisis AI", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFF0F172A))),
+                const SizedBox(height: 15),
+                if (_isGenerating) const LinearProgressIndicator(color: Color(0xFF10B981), backgroundColor: Color(0xFFE2E8F0)),
+                if (_isGenerating) const SizedBox(height: 15),
+                ..._measurements.map((m) => Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFF1F5F9), width: 2),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withAlpha(10), blurRadius: 8, offset: const Offset(0, 4))
+                    ]
+                  ),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                    onTap: _isGenerating ? null : () => _getAIReco(m),
+                    leading: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: m.zScore < -2 ? Colors.orange.withAlpha(30) : Colors.green.withAlpha(30),
+                        shape: BoxShape.circle
+                      ),
+                      child: Icon(m.zScore < -2 ? Icons.warning_rounded : Icons.check_circle_rounded, color: m.zScore < -2 ? Colors.orange : Colors.green),
                     ),
-                  )
-                ],
-              ),
-            ),
-            const SizedBox(height: 30),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text("Tugas Nutrisi Hari Ini", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
-                Text("${_checklist.where((e) => e).length}/3 Selesai", style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF10B981))),
+                    title: Text("Usia ${m.age} Bln", style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
+                    subtitle: Text("Z-Score: ${m.zScore.toStringAsFixed(2)}", style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                    trailing: const Icon(Icons.auto_awesome_rounded, color: Color(0xFF10B981)),
+                  ),
+                )),
+                const SizedBox(height: 80),
               ],
             ),
-            const SizedBox(height: 15),
-            ...List.generate(foods.length, (index) => _buildChecklistItem(foods[index], index)),
-            const SizedBox(height: 30),
-            SizedBox(
-              width: double.infinity,
-              height: 60,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0F172A),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                ),
-                onPressed: () {
-                  if (_checklist.where((e) => e).length == 3) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Luar biasa! Nutrisi harian terpenuhi.")));
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Selesaikan checklist nutrisi terlebih dahulu!")));
-                  }
-                },
-                child: const Text("Kunci Jurnal Hari Ini", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 }
