@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'modules/navigation/main_navigation.dart';
+import 'modules/splash/splash_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -11,36 +11,39 @@ class TumbuhSehatApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color(0xFF10B981);
+    const primaryColor = Color(0xFF10B981); // Emerald Green
+    const backgroundColor = Color(0xFFF8FAFC); // Light Surface
+    const surfaceColor = Colors.white; // White for Cards
+    const textColor = Color(0xFF0F172A); // Dark text
 
     const colorScheme = ColorScheme(
       brightness: Brightness.light,
       primary: primaryColor,
       onPrimary: Colors.white,
       primaryContainer: Color(0xFFD1FAE5),
-      onPrimaryContainer: Colors.black,
-      secondary: Color(0xFF64748B),
+      onPrimaryContainer: Color(0xFF065F46),
+      secondary: Color(0xFF38BDF8),
       onSecondary: Colors.white,
-      secondaryContainer: Color(0xFFF1F5F9),
-      onSecondaryContainer: Colors.black,
-      tertiary: Color(0xFF475569),
+      secondaryContainer: Color(0xFFE0F2FE),
+      onSecondaryContainer: Color(0xFF0284C7),
+      tertiary: Color(0xFF8B5CF6),
       onTertiary: Colors.white,
-      tertiaryContainer: Color(0xFFE2E8F0),
-      onTertiaryContainer: Colors.black,
-      error: Color(0xFFDC2626),
+      tertiaryContainer: Color(0xFFEDE9FE),
+      onTertiaryContainer: Color(0xFF6D28D9),
+      error: Color(0xFFEF4444),
       onError: Colors.white,
       errorContainer: Color(0xFFFEE2E2),
       onErrorContainer: Color(0xFF7F1D1D),
-      surface: Color(0xFFF8FAFC),
-      onSurface: Colors.black,
+      surface: surfaceColor,
+      onSurface: textColor,
       surfaceContainerHighest: Color(0xFFF1F5F9),
-      onSurfaceVariant: Color(0xFF334155),
+      onSurfaceVariant: Color(0xFF64748B),
       outline: Color(0xFFCBD5E1),
       outlineVariant: Color(0xFFE2E8F0),
       shadow: Colors.black,
       scrim: Colors.black,
-      inverseSurface: Color(0xFF0F172A),
-      onInverseSurface: Colors.white,
+      inverseSurface: textColor,
+      onInverseSurface: backgroundColor,
       inversePrimary: Color(0xFF34D399),
     );
 
@@ -51,22 +54,22 @@ class TumbuhSehatApp extends StatelessWidget {
         useMaterial3: true,
         fontFamily: 'Duolingo',
         colorScheme: colorScheme,
-        scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+        scaffoldBackgroundColor: backgroundColor,
         textTheme: const TextTheme(
-          displayLarge:   TextStyle(color: Colors.black, fontFamily: 'Duolingo'),
-          displayMedium:  TextStyle(color: Colors.black, fontFamily: 'Duolingo'),
-          displaySmall:   TextStyle(color: Colors.black, fontFamily: 'Duolingo'),
-          headlineLarge:  TextStyle(color: Colors.black, fontFamily: 'Duolingo'),
-          headlineMedium: TextStyle(color: Colors.black, fontFamily: 'Duolingo'),
-          headlineSmall:  TextStyle(color: Colors.black, fontFamily: 'Duolingo'),
-          titleLarge:     TextStyle(color: Colors.black, fontFamily: 'Duolingo'),
-          titleMedium:    TextStyle(color: Colors.black, fontFamily: 'Duolingo'),
-          titleSmall:     TextStyle(color: Colors.black, fontFamily: 'Duolingo'),
-          bodyLarge:      TextStyle(color: Colors.black, fontFamily: 'Duolingo'),
-          bodyMedium:     TextStyle(color: Colors.black, fontFamily: 'Duolingo'),
-          bodySmall:      TextStyle(color: Color(0xFF64748B), fontFamily: 'Duolingo'),
-          labelLarge:     TextStyle(color: Colors.black, fontFamily: 'Duolingo'),
-          labelMedium:    TextStyle(color: Colors.black, fontFamily: 'Duolingo'),
+          displayLarge:   TextStyle(color: textColor, fontFamily: 'Duolingo'),
+          displayMedium:  TextStyle(color: textColor, fontFamily: 'Duolingo'),
+          displaySmall:   TextStyle(color: textColor, fontFamily: 'Duolingo'),
+          headlineLarge:  TextStyle(color: textColor, fontFamily: 'Duolingo'),
+          headlineMedium: TextStyle(color: textColor, fontFamily: 'Duolingo'),
+          headlineSmall:  TextStyle(color: textColor, fontFamily: 'Duolingo'),
+          titleLarge:     TextStyle(color: textColor, fontFamily: 'Duolingo'),
+          titleMedium:    TextStyle(color: textColor, fontFamily: 'Duolingo'),
+          titleSmall:     TextStyle(color: textColor, fontFamily: 'Duolingo'),
+          bodyLarge:      TextStyle(color: textColor, fontFamily: 'Duolingo'),
+          bodyMedium:     TextStyle(color: textColor, fontFamily: 'Duolingo'),
+          bodySmall:      TextStyle(color: Color(0xFF64748B), fontFamily: 'Duolingo'), // Slate 500
+          labelLarge:     TextStyle(color: textColor, fontFamily: 'Duolingo'),
+          labelMedium:    TextStyle(color: textColor, fontFamily: 'Duolingo'),
           labelSmall:     TextStyle(color: Color(0xFF64748B), fontFamily: 'Duolingo'),
         ),
         appBarTheme: const AppBarTheme(
@@ -74,85 +77,86 @@ class TumbuhSehatApp extends StatelessWidget {
           elevation: 0,
           centerTitle: false,
           titleTextStyle: TextStyle(
-            color: Colors.black,
+            color: textColor,
             fontSize: 20,
             fontWeight: FontWeight.bold,
             fontFamily: 'Duolingo',
           ),
-          iconTheme: IconThemeData(color: Colors.black),
-          actionsIconTheme: IconThemeData(color: Colors.black),
+          iconTheme: IconThemeData(color: textColor),
+          actionsIconTheme: IconThemeData(color: textColor),
         ),
         bottomNavigationBarTheme: const BottomNavigationBarThemeData(
           selectedItemColor: primaryColor,
-          unselectedItemColor: Color(0xFF94A3B8),
-          backgroundColor: Colors.white,
+          unselectedItemColor: Color(0xFF64748B),
+          backgroundColor: surfaceColor,
           selectedLabelStyle: TextStyle(fontFamily: 'Duolingo', fontWeight: FontWeight.bold),
           unselectedLabelStyle: TextStyle(fontFamily: 'Duolingo'),
         ),
         navigationBarTheme: NavigationBarThemeData(
-          backgroundColor: Colors.white,
-          indicatorColor: const Color(0xFFD1FAE5),
+          backgroundColor: surfaceColor,
+          indicatorColor: primaryColor.withAlpha(50),
           iconTheme: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.selected)) {
               return const IconThemeData(color: primaryColor);
             }
-            return const IconThemeData(color: Color(0xFF94A3B8));
+            return const IconThemeData(color: Color(0xFF64748B));
           }),
           labelTextStyle: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.selected)) {
               return const TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontFamily: 'Duolingo');
             }
-            return const TextStyle(color: Color(0xFF94A3B8), fontFamily: 'Duolingo');
+            return const TextStyle(color: Color(0xFF64748B), fontFamily: 'Duolingo');
           }),
         ),
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme: const IconThemeData(color: textColor),
         primaryIconTheme: const IconThemeData(color: primaryColor),
         listTileTheme: const ListTileThemeData(
-          textColor: Colors.black,
-          iconColor: Colors.black,
-          tileColor: Colors.white,
+          textColor: textColor,
+          iconColor: textColor,
+          tileColor: surfaceColor,
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: Colors.white,
+          fillColor: surfaceColor,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.black, width: 2),
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: primaryColor, width: 2),
           ),
-          labelStyle: const TextStyle(color: Color(0xFF64748B)),
-          hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
+          labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
+          hintStyle: const TextStyle(color: Color(0xFF64748B)),
         ),
         checkboxTheme: CheckboxThemeData(
           fillColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.selected)) return primaryColor;
             return Colors.transparent;
           }),
-          checkColor: WidgetStateProperty.all(Colors.white),
+          checkColor: WidgetStateProperty.all(backgroundColor),
+          side: const BorderSide(color: Color(0xFF475569), width: 2),
         ),
         radioTheme: RadioThemeData(
           fillColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.selected)) return primaryColor;
-            return const Color(0xFF94A3B8);
+            return const Color(0xFF64748B);
           }),
         ),
         switchTheme: SwitchThemeData(
           thumbColor: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.selected)) return primaryColor;
-            return Colors.white;
+            if (states.contains(WidgetState.selected)) return Colors.white;
+            return const Color(0xFF94A3B8);
           }),
           trackColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.selected)) {
-              return primaryColor.withValues(alpha: 0.5);
+              return primaryColor;
             }
-            return const Color(0xFFCBD5E1);
+            return const Color(0xFFE2E8F0);
           }),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
@@ -160,39 +164,48 @@ class TumbuhSehatApp extends StatelessWidget {
             backgroundColor: primaryColor,
             foregroundColor: Colors.white,
             textStyle: const TextStyle(fontFamily: 'Duolingo', fontWeight: FontWeight.bold),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            elevation: 8,
+            shadowColor: primaryColor.withAlpha(100),
           ),
         ),
         textButtonTheme: TextButtonThemeData(
-          style: TextButton.styleFrom(foregroundColor: Colors.black),
+          style: TextButton.styleFrom(foregroundColor: primaryColor),
         ),
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
-            foregroundColor: Colors.black,
-            side: const BorderSide(color: Color(0xFFE2E8F0)),
+            foregroundColor: textColor,
+            side: const BorderSide(color: Color(0xFFCBD5E1)),
           ),
         ),
         cardTheme: CardThemeData(
-          color: Colors.white,
-          elevation: 0,
+          color: surfaceColor,
+          elevation: 8,
+          shadowColor: Colors.black.withAlpha(20),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: Color(0xFFF1F5F9)),
+            borderRadius: BorderRadius.circular(24),
+            side: const BorderSide(color: Color(0xFFF1F5F9), width: 1),
           ),
         ),
         chipTheme: ChipThemeData(
-          backgroundColor: const Color(0xFFF1F5F9),
-          selectedColor: const Color(0xFFD1FAE5),
-          labelStyle: const TextStyle(color: Colors.black, fontFamily: 'Duolingo'),
+          backgroundColor: surfaceColor,
+          selectedColor: primaryColor.withAlpha(50),
+          labelStyle: const TextStyle(color: textColor, fontFamily: 'Duolingo'),
           side: const BorderSide(color: Color(0xFFE2E8F0)),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
         dividerTheme: const DividerThemeData(
-          color: Color(0xFFF1F5F9),
+          color: Color(0xFFE2E8F0),
           thickness: 1,
         ),
+        snackBarTheme: SnackBarThemeData(
+          backgroundColor: const Color(0xFF1E293B),
+          contentTextStyle: const TextStyle(color: Colors.white, fontFamily: 'Duolingo'),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          behavior: SnackBarBehavior.floating,
+        ),
       ),
-      home: const MainNavigation(),
+      home: const SplashScreen(),
     );
   }
-}
+}

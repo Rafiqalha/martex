@@ -33,112 +33,124 @@ class _GrowthHistoryScreenState extends State<GrowthHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {  
-    const Color darkGreen = Color(0xFF064E3B);
-    const Color emerald = Color(0xFF10B981);
-    const Color lightEmerald = Color(0xFF34D399);
+    final theme = Theme.of(context);
 
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [darkGreen, emerald, lightEmerald],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: SafeArea(
-          child: _isLoading
-              ? const Center(child: CircularProgressIndicator(color: Colors.white))
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(25),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "Grafik Tumbuh",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.w900,
+      body: SafeArea(
+        child: _isLoading
+            ? Center(child: CircularProgressIndicator(color: theme.colorScheme.primary))
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(25),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (Navigator.canPop(context))
+                          GestureDetector(
+                            onTap: () => Navigator.pop(context),
+                            child: Padding(
+                              padding: const EdgeInsets.only(bottom: 15),
+                              child: Icon(Icons.arrow_back_ios_new_rounded, color: theme.colorScheme.onSurface),
                             ),
                           ),
-                          const SizedBox(height: 5),
-                          Text(
-                            "Pantau perkembangan si kecil secara akurat",
-                            style: TextStyle(
-                              color: Colors.white.withAlpha(180),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
+                        Text(
+                          "Grafik Tumbuh",
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.w900,
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          "Pantau perkembangan si kecil secara akurat",
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 25),
-                      child: Row(
-                        children: [
-                          _buildToggleBtn("Berat Badan", _showWeight, () => setState(() => _showWeight = true)),
-                          const SizedBox(width: 15),
-                          _buildToggleBtn("Tinggi Badan", !_showWeight, () => setState(() => _showWeight = false)),
-                        ],
-                      ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 25),
+                    child: Row(
+                      children: [
+                        _buildToggleBtn("Berat Badan", _showWeight, () => setState(() => _showWeight = true), theme),
+                        const SizedBox(width: 15),
+                        _buildToggleBtn("Tinggi Badan", !_showWeight, () => setState(() => _showWeight = false), theme),
+                      ],
                     ),
-                    const SizedBox(height: 40),
-                    Expanded(
-                      child: _data.isEmpty
-                          ? const Center(
-                              child: Text(
-                                "Belum ada data pertumbuhan",
-                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                              ),
-                            )
-                          : Column(
-                              children: [
-                                SizedBox(
-                                  height: 250,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(right: 30, left: 10),
-                                    child: LineChart(_mainData()),
-                                  ),
+                  ),
+                  const SizedBox(height: 40),
+                  Expanded(
+                    child: _data.isEmpty
+                        ? Center(
+                            child: Text(
+                              "Belum ada data pertumbuhan",
+                              style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                          )
+                        : Column(
+                            children: [
+                              SizedBox(
+                                height: 250,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(right: 30, left: 10),
+                                  child: LineChart(_mainData(theme)),
                                 ),
-                                const SizedBox(height: 40),
-                                Expanded(
+                              ),
+                              const SizedBox(height: 40),
+                              Expanded(
+                                child: Container(
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.surface,
+                                    borderRadius: const BorderRadius.vertical(top: Radius.circular(40)),
+                                    border: Border(
+                                      top: BorderSide(color: theme.colorScheme.outlineVariant, width: 1),
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withAlpha(20),
+                                        blurRadius: 20,
+                                        offset: const Offset(0, -5),
+                                      ),
+                                    ],
+                                  ),
                                   child: ListView.builder(
                                     physics: const BouncingScrollPhysics(),
-                                    padding: const EdgeInsets.symmetric(horizontal: 25),
+                                    padding: const EdgeInsets.only(top: 30, left: 25, right: 25, bottom: 100),
                                     itemCount: _data.length,
-                                    itemBuilder: (context, i) => _buildLogTile(_data[i]),
+                                    itemBuilder: (context, i) => _buildLogTile(_data[i], theme),
                                   ),
-                                )
-                              ],
-                            ),
-                    ),
-                  ],
-                ),
-        ),
+                                ),
+                              )
+                            ],
+                          ),
+                  ),
+                ],
+              ),
       ),
     );
   }
 
-  Widget _buildToggleBtn(String label, bool active, VoidCallback onTap) {
+  Widget _buildToggleBtn(String label, bool active, VoidCallback onTap, ThemeData theme) {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
-            color: active ? Colors.white : Colors.white.withAlpha(50),
+            color: active ? theme.colorScheme.primary : theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: active ? Colors.transparent : theme.colorScheme.outlineVariant,
+              width: 1
+            ),
             boxShadow: active
                 ? [
                     BoxShadow(
-                      color: Colors.black.withAlpha(30),
+                      color: theme.colorScheme.primary.withAlpha(80),
                       blurRadius: 10,
                       offset: const Offset(0, 5),
                     )
@@ -149,7 +161,7 @@ class _GrowthHistoryScreenState extends State<GrowthHistoryScreen> {
             child: Text(
               label,
               style: TextStyle(
-                color: active ? const Color(0xFF065F46) : Colors.white,
+                color: active ? Colors.white : theme.colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -159,9 +171,20 @@ class _GrowthHistoryScreenState extends State<GrowthHistoryScreen> {
     );
   }
 
-  LineChartData _mainData() {
+  LineChartData _mainData(ThemeData theme) {
     return LineChartData(
-      gridData: const FlGridData(show: false),
+      gridData: FlGridData(
+        show: true,
+        drawVerticalLine: false,
+        horizontalInterval: _showWeight ? 5 : 20,
+        getDrawingHorizontalLine: (value) {
+          return FlLine(
+            color: theme.colorScheme.outlineVariant,
+            strokeWidth: 1,
+            dashArray: [5, 5],
+          );
+        },
+      ),
       titlesData: FlTitlesData(
         show: true,
         rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -175,7 +198,7 @@ class _GrowthHistoryScreenState extends State<GrowthHistoryScreen> {
                   padding: const EdgeInsets.only(top: 10),
                   child: Text(
                     "${_data[value.toInt()].age}B",
-                    style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold),
+                    style: theme.textTheme.bodySmall?.copyWith(fontSize: 10, fontWeight: FontWeight.bold),
                   ),
                 );
               }
@@ -190,7 +213,7 @@ class _GrowthHistoryScreenState extends State<GrowthHistoryScreen> {
             getTitlesWidget: (value, meta) {
               return Text(
                 value.toInt().toString(),
-                style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold),
+                style: theme.textTheme.bodySmall?.copyWith(fontSize: 10, fontWeight: FontWeight.bold),
               );
             },
           ),
@@ -203,17 +226,17 @@ class _GrowthHistoryScreenState extends State<GrowthHistoryScreen> {
             return FlSpot(e.key.toDouble(), _showWeight ? e.value.weight : e.value.height);
           }).toList(),
           isCurved: true,
-          color: Colors.white,
-          barWidth: 6,
+          color: theme.colorScheme.primary,
+          barWidth: 4,
           isStrokeCapRound: true,
           dotData: FlDotData(
             show: true,
             getDotPainter: (spot, percent, barData, index) {
               return FlDotCirclePainter(
                 radius: 6,
-                color: Colors.white,
+                color: theme.colorScheme.primary,
                 strokeWidth: 3,
-                strokeColor: const Color(0xFF10B981),
+                strokeColor: theme.colorScheme.surface,
               );
             },
           ),
@@ -221,8 +244,8 @@ class _GrowthHistoryScreenState extends State<GrowthHistoryScreen> {
             show: true,
             gradient: LinearGradient(
               colors: [
-                Colors.white.withAlpha(80),
-                Colors.white.withAlpha(0),
+                theme.colorScheme.primary.withAlpha(80),
+                theme.colorScheme.primary.withAlpha(0),
               ],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
@@ -233,14 +256,14 @@ class _GrowthHistoryScreenState extends State<GrowthHistoryScreen> {
     );
   }
 
-  Widget _buildLogTile(Measurement m) {
+  Widget _buildLogTile(Measurement m, ThemeData theme) {
     return Container(
       margin: const EdgeInsets.only(bottom: 15),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withAlpha(40),
+        color: theme.colorScheme.surfaceContainerHighest.withAlpha(100),
         borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: Colors.white.withAlpha(60), width: 1.5),
+        border: Border.all(color: theme.colorScheme.outlineVariant, width: 1),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -248,12 +271,12 @@ class _GrowthHistoryScreenState extends State<GrowthHistoryScreen> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withAlpha(50),
+                  color: theme.colorScheme.primary.withAlpha(30),
                   borderRadius: BorderRadius.circular(15),
                 ),
-                child: const Icon(Icons.calendar_today_rounded, color: Colors.white, size: 20),
+                child: Icon(Icons.calendar_today_rounded, color: theme.colorScheme.primary, size: 20),
               ),
               const SizedBox(width: 15),
               Column(
@@ -261,12 +284,20 @@ class _GrowthHistoryScreenState extends State<GrowthHistoryScreen> {
                 children: [
                   Text(
                     "Usia ${m.age} Bulan",
-                    style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.white, fontSize: 16),
+                    style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    "Z-Score: ${m.zScore.toStringAsFixed(2)}",
-                    style: TextStyle(color: Colors.white.withAlpha(200), fontSize: 12, fontWeight: FontWeight.bold),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Text(
+                        "Z-Score: ${m.zScore.toStringAsFixed(2)}",
+                        style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      if (m.isSynced == 1) ...[
+                        const SizedBox(width: 8),
+                        Icon(Icons.cloud_done_rounded, size: 12, color: theme.colorScheme.secondary),
+                      ]
+                    ],
                   ),
                 ],
               ),
@@ -274,10 +305,13 @@ class _GrowthHistoryScreenState extends State<GrowthHistoryScreen> {
           ),
           Text(
             _showWeight ? "${m.weight} kg" : "${m.height} cm",
-            style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.white, fontSize: 18),
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w900, 
+              color: theme.colorScheme.primary
+            ),
           ),
         ],
       ),
     );
   }
-}
+}

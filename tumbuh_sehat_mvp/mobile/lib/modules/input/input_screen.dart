@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/local_db.dart';
+import '../../core/api_client.dart';
 import '../../models/measurement.dart';
 
 class InputScreen extends StatefulWidget {
@@ -16,35 +17,23 @@ class _InputScreenState extends State<InputScreen> {
   String _selectedGender = 'L';
   bool _isSaving = false;
 
-  Widget _buildPremiumInput(String label, String hint, TextEditingController controller, IconData icon) {
+  Widget _buildPremiumInput(String label, String hint, TextEditingController controller, IconData icon, ThemeData theme) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(25),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withAlpha(10), blurRadius: 15, offset: const Offset(0, 5)),
-        ],
-        border: Border.all(color: const Color(0xFF10B981).withAlpha(30), width: 2),
-      ),
       child: TextField(
         controller: controller,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF0F172A), fontSize: 16),
+        style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w900),
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
-          labelStyle: const TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.bold),
-          hintStyle: TextStyle(color: Colors.grey.withAlpha(150)),
-          prefixIcon: Icon(icon, color: const Color(0xFF10B981)),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          prefixIcon: Icon(icon, color: theme.colorScheme.primary),
         ),
       ),
     );
   }
 
-  Widget _genderBtn(String label, String value, IconData icon) {
+  Widget _genderBtn(String label, String value, IconData icon, ThemeData theme) {
     bool active = _selectedGender == value;
     return Expanded(
       child: GestureDetector(
@@ -53,24 +42,25 @@ class _InputScreenState extends State<InputScreen> {
           duration: const Duration(milliseconds: 250),
           padding: const EdgeInsets.symmetric(vertical: 20),
           decoration: BoxDecoration(
-            gradient: active 
-                ? const LinearGradient(colors: [Color(0xFF10B981), Color(0xFF34D399)])
-                : const LinearGradient(colors: [Colors.white, Colors.white]),
+            color: active ? theme.colorScheme.primary : theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(25),
-            border: Border.all(color: active ? Colors.transparent : const Color(0xFFE2E8F0), width: 2),
+            border: Border.all(
+              color: active ? Colors.transparent : theme.colorScheme.outlineVariant, 
+              width: 2
+            ),
             boxShadow: active 
-                ? [BoxShadow(color: const Color(0xFF10B981).withAlpha(80), blurRadius: 15, offset: const Offset(0, 8))] 
+                ? [BoxShadow(color: theme.colorScheme.primary.withAlpha(80), blurRadius: 15, offset: const Offset(0, 8))] 
                 : [],
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: active ? Colors.white : Colors.grey, size: 28),
+              Icon(icon, color: active ? Colors.white : theme.colorScheme.onSurfaceVariant, size: 28),
               const SizedBox(width: 10),
               Text(
                 label, 
                 style: TextStyle(
-                  color: active ? Colors.white : Colors.grey, 
+                  color: active ? Colors.white : theme.colorScheme.onSurfaceVariant, 
                   fontWeight: FontWeight.w900,
                   fontSize: 15
                 )
@@ -85,7 +75,10 @@ class _InputScreenState extends State<InputScreen> {
   Future<void> _handleSave() async {
     if (_ageController.text.isEmpty || _weightController.text.isEmpty || _heightController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Bunda, mohon lengkapi semua data pertumbuhan si kecil ya!"))
+        const SnackBar(
+          content: Text("Bunda, mohon lengkapi semua data pertumbuhan si kecil ya!"),
+          backgroundColor: Color(0xFFEF4444),
+        )
       );
       return;
     }
@@ -94,25 +87,38 @@ class _InputScreenState extends State<InputScreen> {
     try {
       double w = double.parse(_weightController.text);
       double h = double.parse(_heightController.text);
-      double z = (w / h) - 0.5;
+      
+      // Calculate BMI (Z-Score approximation for now)
+      // Standard WHO Z-score calculation is more complex and requires tables
+      double heightInMeters = h / 100;
+      double bmi = w / (heightInMeters * heightInMeters);
+      // Rough approximation for Z-score (-2 to 2 is roughly normal)
+      double z = (bmi - 16) / 2.0; 
       
       final m = Measurement(
         age: int.parse(_ageController.text),
         weight: w,
         height: h,
         gender: _selectedGender,
-        lat: -7.9839, 
+        lat: -7.9839, // Dummy coordinates
         lng: 112.6214, 
         zScore: z,
       );
 
       await LocalDatabase.instance.insertMeasurement(m);
       
+      // Try to sync immediately
+      bool syncSuccess = await ApiClient.syncData();
+      
       if (mounted) {
+        final String message = syncSuccess 
+            ? "Tersimpan & tersinkronisasi ke cloud ✓✓" 
+            : "Tersimpan lokal ✓ (Akan disinkronisasi saat online)";
+            
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Hebat! Jurnal pertumbuhan si kecil berhasil dicatat."),
-            backgroundColor: Color(0xFF065F46),
+          SnackBar(
+            content: Text(message),
+            backgroundColor: syncSuccess ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
             behavior: SnackBarBehavior.floating,
           )
         );
@@ -122,7 +128,14 @@ class _InputScreenState extends State<InputScreen> {
         _heightController.clear();
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Terjadi kesalahan: $e")));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Terjadi kesalahan: $e"),
+            backgroundColor: const Color(0xFFEF4444),
+          )
+        );
+      }
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);
@@ -132,8 +145,9 @@ class _InputScreenState extends State<InputScreen> {
   
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         child: Column(
@@ -143,26 +157,33 @@ class _InputScreenState extends State<InputScreen> {
               width: double.infinity,
               padding: const EdgeInsets.only(top: 70, left: 25, right: 25, bottom: 40),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF065F46), Color(0xFF10B981), Color(0xFF34D399)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: theme.colorScheme.surface,
                 borderRadius: const BorderRadius.vertical(bottom: Radius.circular(40)),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF10B981).withAlpha(80),
+                    color: Colors.black.withAlpha(20),
                     blurRadius: 25,
                     offset: const Offset(0, 10),
                   ),
                 ],
+                border: Border(
+                  bottom: BorderSide(color: theme.colorScheme.outlineVariant, width: 1),
+                ),
               ),
-              child: const Column(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Jurnal Pertumbuhan", style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900)),
-                  SizedBox(height: 5),
-                  Text("Pantau parameter fisik si kecil bulan ini", style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.bold)),
+                  Text("Jurnal Pertumbuhan", 
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    )
+                  ),
+                  const SizedBox(height: 5),
+                  Text("Pantau parameter fisik si kecil bulan ini", 
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    )
+                  ),
                 ],
               ),
             ),
@@ -171,36 +192,38 @@ class _InputScreenState extends State<InputScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Profil Biologis", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
+                  Text("Profil Biologis", 
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    )
+                  ),
                   const SizedBox(height: 15),
                   Row(
                     children: [
-                      _genderBtn("Laki-laki", "L", Icons.boy_rounded),
+                      _genderBtn("Laki-laki", "L", Icons.boy_rounded, theme),
                       const SizedBox(width: 15),
-                      _genderBtn("Perempuan", "P", Icons.girl_rounded),
+                      _genderBtn("Perempuan", "P", Icons.girl_rounded, theme),
                     ],
                   ),
                   const SizedBox(height: 35),
-                  const Text("Metrik Fisik", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
+                  Text("Metrik Fisik", 
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    )
+                  ),
                   const SizedBox(height: 15),
-                  _buildPremiumInput("Usia Bayi", "Misal: 24 (Bulan)", _ageController, Icons.cake_rounded),
-                  _buildPremiumInput("Berat Badan", "Misal: 12.5 (Kg)", _weightController, Icons.monitor_weight_rounded),
-                  _buildPremiumInput("Tinggi Badan", "Misal: 85.0 (Cm)", _heightController, Icons.height_rounded),
+                  _buildPremiumInput("Usia Bayi", "Misal: 24 (Bulan)", _ageController, Icons.cake_rounded, theme),
+                  _buildPremiumInput("Berat Badan", "Misal: 12.5 (Kg)", _weightController, Icons.monitor_weight_rounded, theme),
+                  _buildPremiumInput("Tinggi Badan", "Misal: 85.0 (Cm)", _heightController, Icons.height_rounded, theme),
                   const SizedBox(height: 30),
                   SizedBox(
                     width: double.infinity,
                     height: 65,
                     child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0F172A),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-                        elevation: 10,
-                        shadowColor: const Color(0xFF0F172A).withAlpha(60),
-                      ),
                       onPressed: _isSaving ? null : _handleSave,
                       child: _isSaving 
-                          ? const CircularProgressIndicator(color: Color(0xFF10B981)) 
-                          : const Text("Simpan ke Buku KIA", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
+                          ? const CircularProgressIndicator(color: Colors.white) 
+                          : const Text("Simpan ke Buku KIA", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
                     ),
                   ),
                   const SizedBox(height: 100),
@@ -212,4 +235,4 @@ class _InputScreenState extends State<InputScreen> {
       ),
     );
   }
-}
+}

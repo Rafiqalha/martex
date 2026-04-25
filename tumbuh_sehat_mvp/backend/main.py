@@ -1,10 +1,16 @@
+import os
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List
+from dotenv import load_dotenv
+
 import models
 import schemas
 from database import engine, get_db
+import routes
+
+load_dotenv()
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -18,6 +24,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ==========================================
+# MENYAMBUNGKAN ROUTER MODULAR
+# ==========================================
+app.include_router(routes.router)
+
+# ==========================================
+# ENDPOINT LAINNYA (Misal: Sync Data Flutter)
+# ==========================================
 @app.post("/api/measurements/sync")
 def sync_measurements(payload: schemas.SyncPayload, db: Session = Depends(get_db)):
     inserted_records = []
@@ -30,4 +44,4 @@ def sync_measurements(payload: schemas.SyncPayload, db: Session = Depends(get_db
 
 @app.get("/api/measurements", response_model=List[schemas.MeasurementResponse])
 def get_measurements(db: Session = Depends(get_db)):
-    return db.query(models.Measurement).all()
+    return db.query(models.Measurement).order_by(models.Measurement.created_at.desc()).all()

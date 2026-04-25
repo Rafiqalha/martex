@@ -14,7 +14,7 @@ class ProfileScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withAlpha(10), // Efek 3D shadow lembut
+              color: Colors.black.withAlpha(10),
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),
@@ -64,7 +64,7 @@ class ProfileScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 15),
         decoration: BoxDecoration(
-          color: Colors.white.withAlpha(50), // Efek Glassmorphism
+          color: Colors.white.withAlpha(50),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.white.withAlpha(100), width: 1),
         ),
@@ -94,7 +94,6 @@ class ProfileScreen extends StatelessWidget {
         physics: const BouncingScrollPhysics(),
         child: Column(
           children: [
-            // Header Eksklusif dengan Gradien 3D
             Container(
               width: double.infinity,
               padding: const EdgeInsets.only(top: 70, left: 25, right: 25, bottom: 40),
@@ -115,7 +114,6 @@ class ProfileScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  // Avatar 3D
                   Container(
                     padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
@@ -132,7 +130,7 @@ class ProfileScreen extends StatelessWidget {
                     child: const CircleAvatar(
                       radius: 50,
                       backgroundColor: Color(0xFFE2E8F0),
-                      backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=47'), // Gambar dummy eksklusif
+                      backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=47'),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -148,17 +146,16 @@ class ProfileScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text(
-                      "⭐ Kader Posyandu Utama",
+                      "⭐ Bunda Siaga",
                       style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
                     ),
                   ),
                   const SizedBox(height: 30),
-                  // Statistik Kader
                   Row(
                     children: [
-                      _buildStatBadge("142", "Data Balita", Icons.child_care_rounded),
+                      _buildStatBadge("2", "Anak Terdaftar", Icons.family_restroom_rounded),
                       const SizedBox(width: 15),
-                      _buildStatBadge("Level 4", "Reputasi", Icons.military_tech_rounded),
+                      _buildStatBadge("14 Hari", "Streak MPASI", Icons.local_fire_department_rounded),
                     ],
                   ),
                 ],
@@ -167,38 +164,37 @@ class ProfileScreen extends StatelessWidget {
             
             const SizedBox(height: 30),
             
-            // Menu Interaktif
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 25),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    "Pusat Komando",
+                    "Keluarga & Data",
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
                   ),
                   const SizedBox(height: 15),
                   _build3DMenuCard(
                     icon: Icons.download_rounded,
-                    title: "Ekspor Laporan (PDF)",
-                    subtitle: "Unduh data bulan ini untuk Dinas",
-                    iconColor: const Color(0xFF3B82F6), // Biru Profesional
+                    title: "Unduh Rekam Medis (PDF)",
+                    subtitle: "Simpan riwayat tumbuh kembang anak",
+                    iconColor: const Color(0xFF3B82F6),
                     onTap: () {
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Mempersiapkan dokumen PDF...")));
                     },
                   ),
                   _build3DMenuCard(
                     icon: Icons.bluetooth_connected_rounded,
-                    title: "Hubungkan Timbangan",
-                    subtitle: "Integrasi IoT Bluetooth",
-                    iconColor: const Color(0xFF8B5CF6), // Ungu Teknologi
+                    title: "Koneksi Timbangan Pintar",
+                    subtitle: "Sambungkan via Bluetooth",
+                    iconColor: const Color(0xFF8B5CF6),
                     onTap: () {},
                   ),
                   _build3DMenuCard(
                     icon: Icons.shield_rounded,
                     title: "Privasi & Keamanan",
                     subtitle: "Atur PIN dan enkripsi data lokal",
-                    iconColor: const Color(0xFFF59E0B), // Oranye Keamanan
+                    iconColor: const Color(0xFFF59E0B),
                     onTap: () {},
                   ),
                   const SizedBox(height: 10),
@@ -218,11 +214,10 @@ class ProfileScreen extends StatelessWidget {
                     icon: Icons.logout_rounded,
                     title: "Keluar Akun",
                     subtitle: "Hapus sesi perangkat ini",
-                    iconColor: const Color(0xFFEF4444), // Merah Bahaya
+                    iconColor: const Color(0xFFEF4444),
                     onTap: () {},
                   ),
                   const SizedBox(height: 40),
-                  // Watermark versi
                   Center(
                     child: Text(
                       "TumbuhSehat v1.0.0 (MVP)\nSistem Cerdas Gizi Nasional",
@@ -230,7 +225,7 @@ class ProfileScreen extends StatelessWidget {
                       style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.bold, fontSize: 12),
                     ),
                   ),
-                  const SizedBox(height: 100), // Spasi untuk Bottom Navbar
+                  const SizedBox(height: 100),
                 ],
               ),
             ),

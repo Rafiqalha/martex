@@ -137,10 +137,19 @@ class _MapScreenState extends State<MapScreen> {
                       borderRadius: BorderRadius.circular(15),
                       border: Border.all(color: Colors.white24),
                     ),
-                    child: const Column(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        if (Navigator.canPop(context)) ...[
+                          GestureDetector(
+                            onTap: () => Navigator.pop(context),
+                            child: const Padding(
+                              padding: EdgeInsets.only(bottom: 10),
+                              child: Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+                            ),
+                          ),
+                        ],
+                        const Text(
                           "Peta Komando SSGI 2024",
                           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
                         ),
