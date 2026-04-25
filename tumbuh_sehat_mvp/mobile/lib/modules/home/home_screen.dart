@@ -5,276 +5,236 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const Color primaryDark = Color(0xFF0F2C46);
+    const Color accentColor = Color(0xFF10B981);
+    const Color lightCard = Color(0xFFF8FAFC);
+    const Color warningColor = Color(0xFFF59E0B);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.only(top: 70, left: 24, right: 24, bottom: 50),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF065F46), Color(0xFF10B981), Color(0xFF34D399)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+      backgroundColor: primaryDark,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 20),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Halo, Ayah Bunda!",
+                          style: TextStyle(color: Colors.white70, fontSize: 14),
+                        ),
+                        const Text(
+                          "Pantau Si Kecil",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: accentColor, width: 2),
+                      ),
+                      child: const CircleAvatar(
+                        radius: 25,
+                        backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=32'),
+                      ),
+                    ),
+                  ],
                 ),
-                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(40)),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF10B981).withAlpha(80),
-                    blurRadius: 25,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+              const SizedBox(height: 30),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF1E40AF), Color(0xFF1E3A8A)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: Column(
                     children: [
                       Row(
                         children: [
                           Container(
-                            width: 50,
-                            height: 50,
+                            padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 2),
-                              image: const DecorationImage(
-                                image: NetworkImage('https://i.pravatar.cc/150?img=47'),
-                                fit: BoxFit.cover,
-                              ),
+                              color: Colors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(12),
                             ),
+                            child: const Icon(Icons.child_care_rounded, color: Colors.white),
                           ),
                           const SizedBox(width: 15),
                           const Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                "Selamat Bertugas,",
-                                style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
-                              ),
-                              Text(
-                                "Kader Utama",
-                                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900),
-                              ),
+                              Text("Budi Santoso", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                              Text("2 Tahun 4 Bulan", style: TextStyle(color: Colors.white70, fontSize: 12)),
                             ],
                           ),
                         ],
                       ),
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withAlpha(50),
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: const Icon(Icons.notifications_rounded, color: Colors.white),
+                      const SizedBox(height: 25),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildQuickStat("Tinggi", "85.4", "cm"),
+                          _buildQuickStat("Berat", "12.2", "kg"),
+                          _buildQuickStat("Status", "Normal", ""),
+                        ],
                       ),
                     ],
                   ),
-                  const SizedBox(height: 35),
-                  const Text(
-                    "Target Stunting Nasional",
-                    style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 5),
-                  const Text(
-                    "Turunkan hingga 14%",
-                    style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900),
-                  ),
-                  const SizedBox(height: 20),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withAlpha(30),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.white.withAlpha(80), width: 1),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text("Data Terkumpul", style: TextStyle(color: Colors.white, fontSize: 12)),
-                            SizedBox(height: 4),
-                            Text("142 Balita", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text("Status Wilayah", style: TextStyle(color: Colors.white, fontSize: 12)),
-                            SizedBox(height: 4),
-                            Text("Aman Terkendali", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-            const SizedBox(height: 30),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24),
-              child: Text(
-                "Modul Sistem",
-                style: TextStyle(color: Color(0xFF0F172A), fontSize: 20, fontWeight: FontWeight.w900),
-              ),
-            ),
-            const SizedBox(height: 20),
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              mainAxisSpacing: 15,
-              crossAxisSpacing: 15,
-              childAspectRatio: 1.1,
-              children: [
-                _buildMenuCard(
-                  context,
-                  "Smart AI\nNutrisi",
-                  Icons.auto_awesome_rounded,
-                  const Color(0xFF059669),
-                ),
-                _buildMenuCard(
-                  context,
-                  "Pemetaan\nSpasial",
-                  Icons.map_rounded,
-                  const Color(0xFF10B981),
-                ),
-                _buildMenuCard(
-                  context,
-                  "Sinkronisasi\nCloud",
-                  Icons.cloud_sync_rounded,
-                  const Color(0xFF34D399),
-                ),
-                _buildMenuCard(
-                  context,
-                  "Edukasi\nMasyarakat",
-                  Icons.menu_book_rounded,
-                  const Color(0xFF065F46),
-                ),
-              ],
-            ),
-            const SizedBox(height: 30),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24),
-              child: Text(
-                "Wawasan Cepat",
-                style: TextStyle(color: Color(0xFF0F172A), fontSize: 20, fontWeight: FontWeight.w900),
-              ),
-            ),
-            const SizedBox(height: 15),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Container(
+
+              const SizedBox(height: 35),
+
+              Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(25),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withAlpha(10),
-                      blurRadius: 15,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                  border: Border.all(color: const Color(0xFFF1F5F9), width: 2),
+                padding: const EdgeInsets.only(top: 35, left: 24, right: 24, bottom: 100),
+                decoration: const BoxDecoration(
+                  color: lightCard,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(40)),
                 ),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(15),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF10B981).withAlpha(25),
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      child: const Icon(Icons.lightbulb_rounded, color: Color(0xFF10B981), size: 30),
+                    const Text(
+                      "Rangkuman Nutrisi",
+                      style: TextStyle(color: primaryDark, fontSize: 18, fontWeight: FontWeight.w900),
                     ),
-                    const SizedBox(width: 15),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Fokus 1000 Hari Pertama",
-                            style: TextStyle(color: Color(0xFF0F172A), fontSize: 14, fontWeight: FontWeight.w900),
-                          ),
-                          SizedBox(height: 5),
-                          Text(
-                            "Intervensi gizi sangat krusial pada masa kehamilan hingga anak berusia 2 tahun.",
-                            style: TextStyle(color: Color(0xFF64748B), fontSize: 12, fontWeight: FontWeight.bold),
-                          ),
-                        ],
+                    const SizedBox(height: 20),
+                    
+                    _buildFeatureCard(
+                      icon: Icons.analytics_rounded,
+                      title: "Grafik Pertumbuhan",
+                      subtitle: "Lihat tren Z-Score bulan ke bulan",
+                      color: primaryDark,
+                    ),
+                    _buildFeatureCard(
+                      icon: Icons.restaurant_menu_rounded,
+                      title: "Rekomendasi MPASI",
+                      subtitle: "Menu tinggi protein hewani hari ini",
+                      color: accentColor,
+                    ),
+                    _buildFeatureCard(
+                      icon: Icons.event_note_rounded,
+                      title: "Jadwal Posyandu",
+                      subtitle: "12 Mei 2026 di Balai Desa",
+                      color: warningColor,
+                    ),
+
+                    const SizedBox(height: 30),
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 65,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryDark,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          elevation: 0,
+                        ),
+                        onPressed: () {},
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.camera_alt_rounded, color: Colors.white),
+                            SizedBox(width: 12),
+                            Text(
+                              "Scan Nutrisi AI",
+                              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-            ),
-            const SizedBox(height: 120),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildMenuCard(BuildContext context, String title, IconData icon, Color color) {
-    return GestureDetector(
-      onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Akses modul $title dari Bottom Navigation Bar"),
-            backgroundColor: const Color(0xFF0F172A),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(25),
-          boxShadow: [
-            BoxShadow(
-              color: color.withAlpha(20),
-              blurRadius: 15,
-              offset: const Offset(0, 8),
-            ),
-          ],
-          border: Border.all(color: color.withAlpha(50), width: 1),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildQuickStat(String label, String value, String unit) {
+    return Column(
+      children: [
+        Text(label, style: const TextStyle(color: Colors.white60, fontSize: 12)),
+        const SizedBox(height: 4),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: color.withAlpha(25),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: color, size: 28),
-            ),
-            Text(
-              title,
-              style: const TextStyle(
-                color: Color(0xFF0F172A),
-                fontSize: 15,
-                fontWeight: FontWeight.w900,
-                height: 1.2,
-              ),
-            ),
+            Text(value, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900)),
+            const SizedBox(width: 2),
+            Text(unit, style: const TextStyle(color: Colors.white70, fontSize: 10)),
           ],
         ),
+      ],
+    );
+  }
+
+  Widget _buildFeatureCard({required IconData icon, required String title, required String subtitle, required Color color}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: Icon(icon, color: color, size: 28),
+          ),
+          const SizedBox(width: 20),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(color: Color(0xFF0F2C46), fontSize: 15, fontWeight: FontWeight.w900)),
+                const SizedBox(height: 4),
+                Text(subtitle, style: const TextStyle(color: Colors.black45, fontSize: 12)),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right_rounded, color: Colors.black26),
+        ],
       ),
     );
   }

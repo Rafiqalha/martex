@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-
-// Pastikan file-file ini benar-benar ada di dalam folder tersebut!
 import '../home/home_screen.dart';
-import '../map/map_screen.dart';
+import '../history/growth_history_screen.dart'; // Pengganti Map Nasional
 import '../input/input_screen.dart';
 import '../nutrition/smart_nutrition_screen.dart';
 import '../profile/profile_screen.dart';
@@ -19,7 +17,7 @@ class _MainNavigationState extends State<MainNavigation> {
   
   final List<Widget> _screens = [
     const HomeScreen(),
-    const MapScreen(),
+    const GrowthHistoryScreen(), // Melihat grafik pertumbuhan anak
     const InputScreen(),
     const SmartNutritionScreen(),
     const ProfileScreen(),
@@ -28,53 +26,46 @@ class _MainNavigationState extends State<MainNavigation> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
+      body: IndexedStack(index: _currentIndex, children: _screens),
       bottomNavigationBar: Container(
         height: 90,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(15), // Mengganti .withOpacity(0.05)
-              blurRadius: 20, 
-              offset: const Offset(0, -5)
-            ),
-          ],
+          boxShadow: [BoxShadow(color: Colors.black.withAlpha(15), blurRadius: 20, offset: const Offset(0, -5))],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _navItem(Icons.dashboard_rounded, 0),
-            _navItem(Icons.map_rounded, 1),
+            _navItem(Icons.home_rounded, "Beranda", 0),
+            _navItem(Icons.auto_graph_rounded, "Grafik", 1),
             _mainFab(),
-            _navItem(Icons.energy_savings_leaf_rounded, 3),
-            _navItem(Icons.person_rounded, 4),
+            _navItem(Icons.restaurant_menu_rounded, "Nutrisi", 3),
+            _navItem(Icons.person_rounded, "Profil", 4),
           ],
         ),
       ),
     );
   }
 
-  Widget _navItem(IconData icon, int index) {
+  Widget _navItem(IconData icon, String label, int index) {
     bool active = _currentIndex == index;
     return GestureDetector(
       onTap: () => setState(() => _currentIndex = index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: active ? const Color(0xFF10B981).withAlpha(25) : Colors.transparent, // .withOpacity(0.1)
-          borderRadius: BorderRadius.circular(15),
-        ),
-        child: Icon(
-          icon, 
-          color: active ? const Color(0xFF10B981) : Colors.grey[400], 
-          size: 28
-        ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: active ? const Color(0xFF10B981).withAlpha(25) : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: active ? const Color(0xFF10B981) : Colors.grey[400], size: 26),
+          ),
+          Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: active ? const Color(0xFF10B981) : Colors.grey[400])),
+        ],
       ),
     );
   }
@@ -83,24 +74,11 @@ class _MainNavigationState extends State<MainNavigation> {
     return GestureDetector(
       onTap: () => setState(() => _currentIndex = 2),
       child: Container(
-        height: 65,
-        width: 65,
+        height: 60, width: 60,
         decoration: BoxDecoration(
           color: const Color(0xFF10B981),
           shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF10B981).withAlpha(100), // .withOpacity(0.4)
-              blurRadius: 15, 
-              offset: const Offset(0, 8)
-            ),
-            const BoxShadow(
-              color: Colors.white24, 
-              blurRadius: 2, 
-              offset: Offset(0, -3), 
-              spreadRadius: -1
-            ),
-          ],
+          boxShadow: [BoxShadow(color: const Color(0xFF10B981).withAlpha(100), blurRadius: 15, offset: const Offset(0, 8))],
         ),
         child: const Icon(Icons.add_rounded, color: Colors.white, size: 35),
       ),

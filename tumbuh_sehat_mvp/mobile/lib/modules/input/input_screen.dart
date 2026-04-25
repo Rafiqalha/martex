@@ -14,85 +14,33 @@ class _InputScreenState extends State<InputScreen> {
   final _weightController = TextEditingController();
   final _heightController = TextEditingController();
   String _selectedGender = 'L';
-  Map<String, dynamic>? _selectedLocation;
   bool _isSaving = false;
 
-  // Data statis lokasi untuk membypass GPS (titik koordinat ini akan menyalakan Heatmap Web)
-  final List<Map<String, dynamic>> _locations = [
-    {"name": "DKI Jakarta", "lat": -6.2088, "lng": 106.8456},
-    {"name": "Jawa Barat", "lat": -6.9147, "lng": 107.6098},
-    {"name": "Jawa Tengah", "lat": -7.1509, "lng": 110.1402},
-    {"name": "Jawa Timur", "lat": -7.2504, "lng": 112.7688},
-    {"name": "Nusa Tenggara Timur (NTT)", "lat": -8.6500, "lng": 121.0833},
-    {"name": "Papua", "lat": -4.2699, "lng": 138.0803},
-  ];
-
-  Widget _build3DInput(String label, TextEditingController controller, IconData icon) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
-        const SizedBox(height: 10),
-        Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 1, offset: const Offset(0, 4)),
-              const BoxShadow(color: Colors.white, blurRadius: 0, offset: Offset(0, -2)),
-            ],
-          ),
-          child: TextField(
-            controller: controller,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(
-              prefixIcon: Icon(icon, color: const Color(0xFF10B981)),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.all(20),
-            ),
-          ),
+  Widget _buildPremiumInput(String label, String hint, TextEditingController controller, IconData icon) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(25),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withAlpha(10), blurRadius: 15, offset: const Offset(0, 5)),
+        ],
+        border: Border.all(color: const Color(0xFF10B981).withAlpha(30), width: 2),
+      ),
+      child: TextField(
+        controller: controller,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF0F172A), fontSize: 16),
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hint,
+          labelStyle: const TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.bold),
+          hintStyle: TextStyle(color: Colors.grey.withAlpha(150)),
+          prefixIcon: Icon(icon, color: const Color(0xFF10B981)),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         ),
-      ],
-    );
-  }
-
-  Widget _build3DDropdown() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("Lokasi Posyandu (Manual)", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
-        const SizedBox(height: 10),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 1, offset: const Offset(0, 4)),
-              const BoxShadow(color: Colors.white, blurRadius: 0, offset: Offset(0, -2)),
-            ],
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<Map<String, dynamic>>(
-              isExpanded: true,
-              hint: const Text("Pilih Provinsi", style: TextStyle(color: Colors.grey)),
-              value: _selectedLocation,
-              icon: const Icon(Icons.location_on_rounded, color: Color(0xFF10B981)),
-              items: _locations.map((Map<String, dynamic> loc) {
-                return DropdownMenuItem<Map<String, dynamic>>(
-                  value: loc,
-                  child: Text(loc["name"], style: const TextStyle(fontWeight: FontWeight.bold)),
-                );
-              }).toList(),
-              onChanged: (newValue) {
-                setState(() {
-                  _selectedLocation = newValue;
-                });
-              },
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -103,19 +51,30 @@ class _InputScreenState extends State<InputScreen> {
         onTap: () => setState(() => _selectedGender = value),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 250),
-          padding: const EdgeInsets.symmetric(vertical: 18),
+          padding: const EdgeInsets.symmetric(vertical: 20),
           decoration: BoxDecoration(
-            color: active ? const Color(0xFF10B981) : Colors.white,
-            borderRadius: BorderRadius.circular(20),
+            gradient: active 
+                ? const LinearGradient(colors: [Color(0xFF10B981), Color(0xFF34D399)])
+                : const LinearGradient(colors: [Colors.white, Colors.white]),
+            borderRadius: BorderRadius.circular(25),
             border: Border.all(color: active ? Colors.transparent : const Color(0xFFE2E8F0), width: 2),
-            boxShadow: active ? [BoxShadow(color: const Color(0xFF10B981).withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 5))] : [],
+            boxShadow: active 
+                ? [BoxShadow(color: const Color(0xFF10B981).withAlpha(80), blurRadius: 15, offset: const Offset(0, 8))] 
+                : [],
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: active ? Colors.white : Colors.grey),
+              Icon(icon, color: active ? Colors.white : Colors.grey, size: 28),
               const SizedBox(width: 10),
-              Text(label, style: TextStyle(color: active ? Colors.white : Colors.grey, fontWeight: FontWeight.bold)),
+              Text(
+                label, 
+                style: TextStyle(
+                  color: active ? Colors.white : Colors.grey, 
+                  fontWeight: FontWeight.w900,
+                  fontSize: 15
+                )
+              ),
             ],
           ),
         ),
@@ -123,50 +82,47 @@ class _InputScreenState extends State<InputScreen> {
     );
   }
 
- Future<void> _handleSave() async {
-    if (_ageController.text.isEmpty || _weightController.text.isEmpty || _heightController.text.isEmpty || _selectedLocation == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Mohon lengkapi semua data dan lokasi!")));
+  Future<void> _handleSave() async {
+    if (_ageController.text.isEmpty || _weightController.text.isEmpty || _heightController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Bunda, mohon lengkapi semua data pertumbuhan si kecil ya!"))
+      );
       return;
     }
 
     setState(() => _isSaving = true);
     try {
-      double z = (double.parse(_weightController.text) / double.parse(_heightController.text)) - 0.5;
+      double w = double.parse(_weightController.text);
+      double h = double.parse(_heightController.text);
+      double z = (w / h) - 0.5;
       
       final m = Measurement(
         age: int.parse(_ageController.text),
-        weight: double.parse(_weightController.text),
-        height: double.parse(_heightController.text),
+        weight: w,
+        height: h,
         gender: _selectedGender,
-        lat: _selectedLocation!['lat'], 
-        lng: _selectedLocation!['lng'], 
+        lat: -7.9839, 
+        lng: 112.6214, 
         zScore: z,
       );
 
       await LocalDatabase.instance.insertMeasurement(m);
       
-      // PERBAIKAN ARSITEKTUR: Jangan gunakan Navigator.pop!
-      // Bersihkan form dan tampilkan pesan sukses.
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Data balita berhasil disimpan ke sistem!"),
-            backgroundColor: Color(0xFF10B981),
+            content: Text("Hebat! Jurnal pertumbuhan si kecil berhasil dicatat."),
+            backgroundColor: Color(0xFF065F46),
             behavior: SnackBarBehavior.floating,
           )
         );
         
-        // Reset formulir untuk input berikutnya
         _ageController.clear();
         _weightController.clear();
         _heightController.clear();
-        setState(() {
-          _selectedLocation = null;
-          _selectedGender = 'L';
-        });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Terjadi kesalahan sistem: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Terjadi kesalahan: $e")));
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);
@@ -177,42 +133,78 @@ class _InputScreenState extends State<InputScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(title: const Text("Input Data", style: TextStyle(fontWeight: FontWeight.bold))),
+      backgroundColor: const Color(0xFFF8FAFC),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(25),
+        physics: const BouncingScrollPhysics(),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                _genderBtn("Laki-laki", "L", Icons.male_rounded),
-                const SizedBox(width: 15),
-                _genderBtn("Perempuan", "P", Icons.female_rounded),
-              ],
-            ),
-            const SizedBox(height: 30),
-            _build3DInput("Usia (Bulan)", _ageController, Icons.calendar_today_rounded),
-            const SizedBox(height: 20),
-            _build3DInput("Berat (kg)", _weightController, Icons.monitor_weight_rounded),
-            const SizedBox(height: 20),
-            _build3DInput("Tinggi (cm)", _heightController, Icons.height_rounded),
-            const SizedBox(height: 20),
-            _build3DDropdown(), // Dropdown Lokasi Manual
-            const SizedBox(height: 40),
-            SizedBox(
+            Container(
               width: double.infinity,
-              height: 65,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0F172A),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  elevation: 5,
-                  shadowColor: const Color(0xFF0F172A).withOpacity(0.5),
+              padding: const EdgeInsets.only(top: 70, left: 25, right: 25, bottom: 40),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF065F46), Color(0xFF10B981), Color(0xFF34D399)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                onPressed: _isSaving ? null : _handleSave,
-                child: _isSaving 
-                    ? const CircularProgressIndicator(color: Colors.white) 
-                    : const Text("Simpan Data", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(40)),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF10B981).withAlpha(80),
+                    blurRadius: 25,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Jurnal Pertumbuhan", style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900)),
+                  SizedBox(height: 5),
+                  Text("Pantau parameter fisik si kecil bulan ini", style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(25),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text("Profil Biologis", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
+                  const SizedBox(height: 15),
+                  Row(
+                    children: [
+                      _genderBtn("Laki-laki", "L", Icons.boy_rounded),
+                      const SizedBox(width: 15),
+                      _genderBtn("Perempuan", "P", Icons.girl_rounded),
+                    ],
+                  ),
+                  const SizedBox(height: 35),
+                  const Text("Metrik Fisik", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
+                  const SizedBox(height: 15),
+                  _buildPremiumInput("Usia Bayi", "Misal: 24 (Bulan)", _ageController, Icons.cake_rounded),
+                  _buildPremiumInput("Berat Badan", "Misal: 12.5 (Kg)", _weightController, Icons.monitor_weight_rounded),
+                  _buildPremiumInput("Tinggi Badan", "Misal: 85.0 (Cm)", _heightController, Icons.height_rounded),
+                  const SizedBox(height: 30),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 65,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0F172A),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                        elevation: 10,
+                        shadowColor: const Color(0xFF0F172A).withAlpha(60),
+                      ),
+                      onPressed: _isSaving ? null : _handleSave,
+                      child: _isSaving 
+                          ? const CircularProgressIndicator(color: Color(0xFF10B981)) 
+                          : const Text("Simpan ke Buku KIA", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
+                    ),
+                  ),
+                  const SizedBox(height: 100),
+                ],
               ),
             ),
           ],

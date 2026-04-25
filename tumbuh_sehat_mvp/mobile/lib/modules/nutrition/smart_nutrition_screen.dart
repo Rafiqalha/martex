@@ -1,8 +1,7 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../core/local_db.dart';
-import '../../core/api_client.dart';
 import '../../models/measurement.dart';
 
 class SmartNutritionScreen extends StatefulWidget {
@@ -13,11 +12,12 @@ class SmartNutritionScreen extends StatefulWidget {
 }
 
 class _SmartNutritionScreenState extends State<SmartNutritionScreen> {
-  List<Measurement> _measurements = [];
+  Measurement? _latestData;
   bool _isLoading = true;
-  bool _isSyncing = false;
   bool _isGenerating = false;
-  final String _apiKey = 'AIzaSyDL4NqxqWWnU8-piYwsFX1Uoyl2ytizE64';
+  String _aiResponse = "";
+
+  final String _apiKey = 'API_KEY_ANDA_DISINI';
 
   @override
   void initState() {
@@ -27,180 +27,264 @@ class _SmartNutritionScreenState extends State<SmartNutritionScreen> {
 
   Future<void> _loadData() async {
     final data = await LocalDatabase.instance.getAllMeasurements();
-    setState(() {
-      _measurements = data;
-      _isLoading = false;
-    });
-  }
-
-  Future<void> _syncData() async {
-    setState(() => _isSyncing = true);
-    final success = await ApiClient.syncData();
-    await _loadData();
-    setState(() => _isSyncing = false);
-
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(success ? 'Sinkronisasi berhasil' : 'Gagal terhubung ke server'),
-          backgroundColor: success ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-        ),
-      );
+      setState(() {
+        if (data.isNotEmpty) {
+          _latestData = data.last;
+        }
+        _isLoading = false;
+      });
     }
   }
 
-  Future<void> _getAIReco(Measurement m) async {
-    setState(() => _isGenerating = true);
+  String _getFactualStatus(double zScore) {
+    if (zScore < -3) return "Gizi Buruk / Kritis";
+    if (zScore < -2) return "Risiko Stunting";
+    if (zScore > 2) return "Risiko Obesitas";
+    return "Tumbuh Normal & Sehat";
+  }
+
+  Future<void> _generateNutritionPlan() async {
+    if (_latestData == null) return;
+    
+    setState(() {
+      _isGenerating = true;
+      _aiResponse = "";
+    });
+
     try {
       final model = GenerativeModel(model: 'gemini-3-flash-preview', apiKey: _apiKey);
-      final prompt = 'Balita ${m.age} bln, BB ${m.weight}kg, TB ${m.height}cm, Z-Score ${m.zScore.toStringAsFixed(2)}. Berikan 3 makanan protein hewani lokal murah. Jawab hanya JSON: {"status": "...", "budget": "...", "foods": [{"name": "...", "benefit": "..."}]}';
+      
+      final prompt = '''
+Anda adalah Ahli Gizi Anak terkemuka di Indonesia.
+Klien Anda adalah seorang ibu yang memiliki balita dengan data berikut:
+- Usia: ${_latestData!.age} Bulan
+- Berat Badan: ${_latestData!.weight} kg
+- Tinggi Badan: ${_latestData!.height} cm
+- Z-Score (Status Medis): ${_latestData!.zScore.toStringAsFixed(2)}
+
+Berikan rekomendasi nutrisi harian yang spesifik untuk kondisi anak ini. 
+Gunakan pengetahuan luas Anda tentang pangan lokal Indonesia. Sertakan rekomendasi menu makanan, sumber protein hewani terbaik, dan estimasi harga pasar saat ini (dalam Rupiah) agar terjangkau bagi ibu rumah tangga.
+Gunakan format Markdown agar rapi (gunakan heading, bold, dan bullet points). Jangan gunakan sapaan pembuka yang bertele-tele, langsung ke intinya.
+''';
+
       final response = await model.generateContent([Content.text(prompt)]);
-      final parsed = jsonDecode(response.text!.replaceAll('```json', '').replaceAll('```', ''));
       
       if (mounted) {
-        _showNutritionSheet(m, parsed);
+        setState(() {
+          _aiResponse = response.text ?? "Gagal mendapatkan rekomendasi.";
+          _isGenerating = false;
+        });
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Gagal memuat AI: $e")));
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isGenerating = false);
+        setState(() {
+          _aiResponse = "Terjadi kesalahan pada koneksi AI: $e";
+          _isGenerating = false;
+        });
       }
     }
-  }
-
-  void _showNutritionSheet(Measurement m, Map<String, dynamic> ai) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(30),
-        decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(40))),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(width: 50, height: 5, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10))),
-            const SizedBox(height: 20),
-            Text(ai['status'], style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
-            const SizedBox(height: 20),
-            ...List.generate(ai['foods'].length, (i) => ListTile(
-              leading: const Icon(Icons.restaurant_rounded, color: Color(0xFF10B981)),
-              title: Text(ai['foods'][i]['name'], style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-              subtitle: Text(ai['foods'][i]['benefit'], style: const TextStyle(color: Color(0xFF64748B))),
-            )),
-            const SizedBox(height: 30),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(15)
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text("Estimasi Budget:", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
-                  Text(ai['budget'], style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF10B981), fontSize: 16)),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    int unsynced = _measurements.where((m) => m.isSynced == 0).length;
-
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text("Nutrisi & Sinkronisasi", style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
+        title: const Text(
+          "Nutrisi Cerdas",
+          style: TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.w900),
+        ),
       ),
-      body: _isLoading 
-        ? const Center(child: CircularProgressIndicator(color: Color(0xFF10B981))) 
-        : RefreshIndicator(
-            onRefresh: _loadData,
-            color: const Color(0xFF10B981),
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(20),
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(25),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [Color(0xFF0F172A), Color(0xFF1E293B)]),
-                    borderRadius: BorderRadius.circular(30),
-                    boxShadow: [
-                      BoxShadow(color: Colors.black.withAlpha(20), blurRadius: 15, offset: const Offset(0, 10))
-                    ]
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFF10B981)))
+          : _latestData == null
+              ? const Center(
+                  child: Text(
+                    "Belum ada data anak.\nSilakan input data di menu utama.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                )
+              : SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text("Data Lokal", style: TextStyle(color: Colors.white70)),
-                          Text("$unsynced Tertunda", style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
-                        ],
-                      ),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: const Color(0xFF0F172A),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(25),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF065F46), Color(0xFF10B981), Color(0xFF34D399)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(30),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF10B981).withAlpha(80),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
                         ),
-                        onPressed: unsynced == 0 || _isSyncing ? null : _syncData,
-                        child: _isSyncing 
-                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0F172A))) 
-                            : const Text("Kirim", style: TextStyle(fontWeight: FontWeight.bold)),
-                      )
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  "Rapor Gizi Faktual",
+                                  style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withAlpha(50),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    "Usia ${_latestData!.age} Bln",
+                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                                  ),
+                                )
+                              ],
+                            ),
+                            const SizedBox(height: 15),
+                            Text(
+                              _getFactualStatus(_latestData!.zScore),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(height: 25),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                _buildMetricItem("Berat", "${_latestData!.weight} kg"),
+                                _buildMetricItem("Tinggi", "${_latestData!.height} cm"),
+                                _buildMetricItem("Z-Score", _latestData!.zScore.toStringAsFixed(2)),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+                      if (_aiResponse.isEmpty && !_isGenerating)
+                        SizedBox(
+                          width: double.infinity,
+                          height: 65,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF0F172A),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                              elevation: 10,
+                              shadowColor: const Color(0xFF0F172A).withAlpha(50),
+                            ),
+                            onPressed: _generateNutritionPlan,
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.auto_awesome_rounded, color: Color(0xFFFFD602)),
+                                SizedBox(width: 10),
+                                Text(
+                                  "Minta Resep & Anggaran AI",
+                                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      if (_isGenerating)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(30),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(25),
+                            border: Border.all(color: const Color(0xFFF1F5F9), width: 2),
+                          ),
+                          child: const Column(
+                            children: [
+                              CircularProgressIndicator(color: Color(0xFF10B981)),
+                              SizedBox(height: 20),
+                              Text(
+                                "Menganalisis nutrisi & harga pasar...",
+                                style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.bold),
+                              )
+                            ],
+                          ),
+                        ),
+                      if (_aiResponse.isNotEmpty)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(25),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(25),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withAlpha(5),
+                                blurRadius: 15,
+                                offset: const Offset(0, 5),
+                              )
+                            ],
+                            border: Border.all(color: const Color(0xFFF1F5F9), width: 2),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Row(
+                                children: [
+                                  Icon(Icons.restaurant_menu_rounded, color: Color(0xFF10B981)),
+                                  SizedBox(width: 10),
+                                  Text(
+                                    "Saran Ahli Gizi AI",
+                                    style: TextStyle(color: Color(0xFF0F172A), fontSize: 18, fontWeight: FontWeight.w900),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+                              MarkdownBody(
+                                data: _aiResponse,
+                                styleSheet: MarkdownStyleSheet(
+                                  h1: const TextStyle(color: Color(0xFF0F172A), fontSize: 20, fontWeight: FontWeight.w900),
+                                  h2: const TextStyle(color: Color(0xFF0F172A), fontSize: 18, fontWeight: FontWeight.w900),
+                                  h3: const TextStyle(color: Color(0xFF0F172A), fontSize: 16, fontWeight: FontWeight.bold),
+                                  p: const TextStyle(color: Color(0xFF334155), fontSize: 14, height: 1.6),
+                                  listBullet: const TextStyle(color: Color(0xFF10B981), fontSize: 16),
+                                  strong: const TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.w900),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      const SizedBox(height: 100),
                     ],
                   ),
                 ),
-                const SizedBox(height: 30),
-                const Text("Klik Riwayat untuk Analisis AI", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFF0F172A))),
-                const SizedBox(height: 15),
-                if (_isGenerating) const LinearProgressIndicator(color: Color(0xFF10B981), backgroundColor: Color(0xFFE2E8F0)),
-                if (_isGenerating) const SizedBox(height: 15),
-                ..._measurements.map((m) => Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFF1F5F9), width: 2),
-                    boxShadow: [
-                      BoxShadow(color: Colors.black.withAlpha(10), blurRadius: 8, offset: const Offset(0, 4))
-                    ]
-                  ),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-                    onTap: _isGenerating ? null : () => _getAIReco(m),
-                    leading: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: m.zScore < -2 ? Colors.orange.withAlpha(30) : Colors.green.withAlpha(30),
-                        shape: BoxShape.circle
-                      ),
-                      child: Icon(m.zScore < -2 ? Icons.warning_rounded : Icons.check_circle_rounded, color: m.zScore < -2 ? Colors.orange : Colors.green),
-                    ),
-                    title: Text("Usia ${m.age} Bln", style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
-                    subtitle: Text("Z-Score: ${m.zScore.toStringAsFixed(2)}", style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
-                    trailing: const Icon(Icons.auto_awesome_rounded, color: Color(0xFF10B981)),
-                  ),
-                )),
-                const SizedBox(height: 80),
-              ],
-            ),
-          ),
+    );
+  }
+
+  Widget _buildMetricItem(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900),
+        ),
+      ],
     );
   }
 }
