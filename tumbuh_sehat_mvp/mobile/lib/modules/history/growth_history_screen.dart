@@ -32,7 +32,7 @@ class _GrowthHistoryScreenState extends State<GrowthHistoryScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) {  
     const Color darkGreen = Color(0xFF064E3B);
     const Color emerald = Color(0xFF10B981);
     const Color lightEmerald = Color(0xFF34D399);
