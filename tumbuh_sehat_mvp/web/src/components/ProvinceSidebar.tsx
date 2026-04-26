@@ -1,84 +1,63 @@
-import { PROVINCE_STATS, getStuntingColor } from "@/lib/constants";
-import { AlertCircle, TrendingDown, Users, Activity, MapPin, Map, Download } from "lucide-react";
+import { PROVINCE_STATS } from "@/lib/constants";
+import { X, MapPin } from "lucide-react";
 
-export default function ProvinceSidebar({ selectedId }: { selectedId: string | null }) {
-  const province = PROVINCE_STATS.find((p) => p.id === selectedId);
+type ProvinceSidebarProps = {
+  selectedProvinceId: string | null;
+  onClose: () => void;
+};
+
+export default function ProvinceSidebar({ selectedProvinceId, onClose }: ProvinceSidebarProps) {
+  if (!selectedProvinceId) return null;
+
+  const province = PROVINCE_STATS.find((p) => p.id === selectedProvinceId);
+  if (!province) return null;
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="p-6 border-b border-gray-100 shrink-0">
-        <h2 className="text-lg font-bold text-[#0F172A]">Analisis Wilayah</h2>
-        <p className="text-sm text-gray-500 mt-1">Pilih area pada peta untuk detail</p>
+    <div className="absolute top-4 right-4 w-80 glass-card rounded-2xl p-6 z-[1000] shadow-lg animate-in fade-in slide-in-from-right-8 duration-300">
+      
+      {/* Header */}
+      <div className="flex justify-between items-start mb-4">
+        <div>
+          <h2 className="text-xl font-bold text-slate-800 leading-tight">
+            {province.name}
+          </h2>
+          <div className="flex items-center text-emerald-600 mt-1">
+            <MapPin size={14} className="mr-1" />
+            <span className="text-xs font-semibold uppercase tracking-wider">SSGI 2024</span>
+          </div>
+        </div>
+        <button 
+          onClick={onClose} 
+          className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-full transition-colors"
+        >
+          <X size={18} />
+        </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6">
-        {province ? (
-          <div className="space-y-6">
-            <div>
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-gray-100 text-gray-600 text-xs font-semibold uppercase tracking-wider mb-3">
-                <MapPin size={12} />
-                Provinsi
-              </div>
-              <h3 className="text-2xl font-bold text-[#0F172A]">{province.name}</h3>
-            </div>
-            
-            <div className="p-5 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden" style={{ backgroundColor: `${getStuntingColor(province.prevalence)}08` }}>
-              <div className="absolute top-0 right-0 p-4 opacity-10">
-                <Activity size={64} color={getStuntingColor(province.prevalence)} />
-              </div>
-              <label className="text-sm font-semibold text-gray-600 flex items-center gap-2">
-                Prevalensi Saat Ini
-              </label>
-              <div className="mt-2 flex items-baseline gap-2">
-                <p className="text-4xl font-black" style={{ color: getStuntingColor(province.prevalence) }}>
-                  {province.prevalence}%
-                </p>
-                <span className="text-sm font-medium text-[#16A34A] flex items-center">
-                  <TrendingDown size={14} className="mr-1" /> 1.2%
-                </span>
-              </div>
-            </div>
+      {/* Main Stat Card */}
+      <div className="bg-white rounded-xl border border-emerald-100 p-5 mt-6 card-lift">
+        <p className="text-slate-500 text-xs font-semibold uppercase mb-1">
+          Angka Prevalensi
+        </p>
+        <div className="flex items-end gap-2">
+          <span className="text-4xl font-black text-emerald-800 counter">
+            {province.prevalence.toFixed(1)}
+          </span>
+          <span className="text-lg font-bold text-slate-400 mb-1">%</span>
+        </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white rounded-lg shadow-sm">
-                    <AlertCircle size={16} className="text-gray-500" />
-                  </div>
-                  <span className="text-sm font-medium text-gray-600">Status Sistem</span>
-                </div>
-                <span className="text-sm font-bold text-[#0F172A] py-1 px-3 bg-white rounded-full border border-gray-200 shadow-sm">
-                  {province.status}
-                </span>
-              </div>
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white rounded-lg shadow-sm">
-                    <Users size={16} className="text-gray-500" />
-                  </div>
-                  <span className="text-sm font-medium text-gray-600">Balita Diukur</span>
-                </div>
-                <span className="text-sm font-bold text-[#0F172A]">12,402</span>
-              </div>
-            </div>
-
-            <div className="pt-4">
-              <button className="w-full py-3.5 bg-[#0F172A] text-white rounded-xl font-medium hover:bg-gray-800 transition-all shadow-md flex items-center justify-center gap-2">
-                <Download size={18} />
-                Unduh Laporan Daerah
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="h-full flex flex-col items-center justify-center text-center px-4">
-            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-              <Map size={24} className="text-gray-300" />
-            </div>
-            <p className="text-sm font-medium text-gray-900 mb-1">Tidak ada area terpilih</p>
-            <p className="text-sm text-gray-500">Klik salah satu provinsi pada peta untuk melihat analitik mendalam.</p>
-          </div>
-        )}
+        {/* Status Badge */}
+        <div className={`mt-4 inline-flex px-3 py-1.5 rounded-lg text-sm font-bold ${province.statusColor}`}>
+          <div className="w-2 h-2 rounded-full bg-current opacity-75 mr-2 self-center dot-pulse"></div>
+          Status: {province.status}
+        </div>
       </div>
+
+      {/* Aksi Tambahan (Opsional) */}
+      <button className="w-full mt-6 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-colors">
+        Lihat Detail Posyandu
+      </button>
+
     </div>
   );
 }
